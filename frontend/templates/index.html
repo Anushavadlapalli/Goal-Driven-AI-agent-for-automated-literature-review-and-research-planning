@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ResearchMind AI — Literature Review Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <span class="nav-icon">🧠</span>
+        <span class="nav-name">Research<span class="nav-accent">Mind</span></span>
+      </div>
+      <div class="nav-right">
+        <span class="nav-user">👤 {{ username }}</span>
+        <a href="/logout" class="logout-btn">Sign Out</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-blobs">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+    </div>
+    <div class="hero-content">
+      <h1>🧠 <span class="grad-text">ResearchMind</span> AI</h1>
+      <p class="hero-sub">Enter any research topic — get AI summaries, papers, datasets & audio instantly.</p>
+
+      <div class="search-wrap">
+        <div class="search-box">
+          <span class="s-icon">🔍</span>
+          <input id="topicInput" type="text" placeholder="e.g. Deep Learning in Medical Imaging…" />
+          <button id="searchBtn" onclick="startResearch()">
+            Analyze <span>→</span>
+          </button>
+        </div>
+        <div class="chips">
+          <span class="chip-label">Try:</span>
+          <button class="chip" onclick="setTopic('Natural Language Processing')">NLP</button>
+          <button class="chip" onclick="setTopic('Computer Vision Object Detection')">Computer Vision</button>
+          <button class="chip" onclick="setTopic('Reinforcement Learning')">RL</button>
+          <button class="chip" onclick="setTopic('Federated Learning Privacy')">Federated Learning</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Loading -->
+  <div id="loadingState" class="loading hidden">
+    <div class="loader-card">
+      <div class="spinner"></div>
+      <div class="load-steps">
+        <div class="lstep active" id="step1">🔍 Searching research papers…</div>
+        <div class="lstep" id="step2">🧠 Analyzing with AI…</div>
+        <div class="lstep" id="step3">📊 Structuring insights…</div>
+        <div class="lstep" id="step4">✅ Building your report…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <main id="resultsArea" class="results hidden">
+
+    <div class="res-header">
+      <div class="res-header-inner">
+        <div class="res-pill">📚 Research Analysis</div>
+        <h2 id="resTitle"></h2>
+        <div class="res-meta" id="resMeta"></div>
+        <button class="audio-trigger" id="audioBtn" onclick="generateAudio()">🔊 Generate Audio Summary</button>
+      </div>
+    </div>
+
+    <!-- Audio -->
+    <div id="audioSection" class="audio-wrap hidden">
+      <div class="audio-card">
+        <div class="audio-left">
+          <div class="audio-emoji">🎙️</div>
+          <div>
+            <div class="audio-title">Research Summary Audio</div>
+            <div class="audio-status" id="audioStatus">Ready to play</div>
+          </div>
+        </div>
+        <div class="audio-controls">
+          <button onclick="playAudio()">▶ Play</button>
+          <button onclick="stopAudio()">⏹ Stop</button>
+          <button onclick="downloadAudioScript()">⬇ Download Script</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Cards -->
+    <div class="sections-grid" id="sectionsGrid"></div>
+
+    <!-- Datasets -->
+    <section class="block-section" id="datasetsSection">
+      <div class="block-header">
+        <div class="block-icon" style="background:#ecfdf5;color:#059669;">🗃️</div>
+        <div>
+          <h3>Datasets Mentioned in Research</h3>
+          <p>Key datasets referenced in this domain</p>
+        </div>
+      </div>
+      <div class="datasets-grid" id="datasetsGrid"></div>
+    </section>
+
+    <!-- Papers with Year Selector -->
+    <section class="block-section" id="papersSection">
+      <div class="block-header">
+        <div class="block-icon" style="background:#eff6ff;color:#2563eb;">📄</div>
+        <div>
+          <h3>Relevant Research Articles</h3>
+          <p id="papersSubtitle">All fetched papers — select a year to filter</p>
+        </div>
+      </div>
+
+      <!-- Year Selector Bar -->
+      <div class="year-selector-card" id="yearSelectorCard">
+        <div class="ysc-top">
+          <div class="ysc-left">
+            <span class="ysc-icon">📅</span>
+            <div>
+              <div class="ysc-title">Filter by Publication Year</div>
+              <div class="ysc-sub">Select a year to see papers &amp; count published that year</div>
+            </div>
+          </div>
+          <div class="ysc-right">
+            <select id="yearSelect" onchange="onYearSelect(this.value)">
+              <option value="">— All Years —</option>
+            </select>
+            <button class="ysc-clear hidden" id="yscClear" onclick="clearYearSelect()">✕ Clear</button>
+          </div>
+        </div>
+        <div class="ysc-result hidden" id="yscResult">
+          <div class="ysc-stat-box">
+            <div class="ysc-stat-num" id="yscCount">0</div>
+            <div class="ysc-stat-label" id="yscLabel">Papers in 2024</div>
+          </div>
+          <div id="yscLoading" class="hidden ysc-loading">⏳ Fetching papers from this year…</div>
+        </div>
+      </div>
+
+      <div class="papers-list" id="papersGrid"></div>
+    </section>
+
+  </main>
+
+  <!-- Trend Graph -->
+  <section class="block-section hidden" id="trendSection">
+    <div class="block-header">
+      <div class="block-icon" style="background:#eff6ff;color:#2563eb;">📈</div>
+      <div>
+        <h3>Publication Trend Analysis</h3>
+        <p>Click any point or year on the chart — see all real papers from that year</p>
+      </div>
+    </div>
+    <div class="trend-card">
+      <div class="trend-top">
+        <div class="trend-stats" id="trendStats"></div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="trendChart"></canvas>
+      </div>
+      <div class="chart-legend">
+        <span class="legend-dot" style="background:#2563eb;width:12px;height:3px;border-radius:2px;display:inline-block;"></span>
+        &nbsp;Publications per Year &nbsp;·&nbsp; Click any point to view those papers ↓
+      </div>
+    </div>
+  </section>
+
+  <!-- Year Papers Modal -->
+  <section class="block-section hidden" id="yearPapersSection">
+    <div class="block-header">
+      <div class="block-icon" style="background:#fdf4ff;color:#9333ea;">📅</div>
+      <div>
+        <h3 id="yearPapersTitle">Papers from Selected Year</h3>
+        <p id="yearPapersSubtitle">Real papers published in this year</p>
+      </div>
+      <button class="yd-reset" id="yearPapersClose" onclick="closeYearPapers()" style="margin-left:auto;">✕ Close</button>
+    </div>
+    <div id="yearPapersLoading" class="hidden" style="padding:24px;text-align:center;color:var(--muted);font-size:14px;">
+      ⏳ Fetching papers from this year…
+    </div>
+    <div class="papers-list" id="yearPapersList"></div>
+  </section>
+
+  <!-- Introduction & Literature Review -->
+  <section class="block-section hidden" id="litSection">
+    <div class="block-header">
+      <div class="block-icon" style="background:#ecfdf5;color:#059669;">📝</div>
+      <div>
+        <h3>Introduction &amp; Literature Review</h3>
+        <p>AI-generated from top 3 papers (intro) and all fetched papers (literature review)</p>
+      </div>
+      <button class="download-pdf-btn" id="downloadPdfBtn" onclick="downloadPDF()">
+        ⬇ Download Full PDF
+      </button>
+    </div>
+    <div class="lit-card" id="litCard"></div>
+  </section>
+
+  <!-- Final Report Summary -->
+  <section class="block-section hidden" id="reportSection">
+    <div class="block-header">
+      <div class="block-icon" style="background:#fdf4ff;color:#9333ea;">📋</div>
+      <div>
+        <h3>Final Research Report</h3>
+        <p>Complete overview of your research analysis</p>
+      </div>
+    </div>
+    <div class="report-card" id="reportCard"></div>
+  </section>
+
+  <footer class="footer">
+    <p>ResearchMind AI — Goal-Driven AI Agent for Automated Literature Review</p>
+    <p>Team: P. Bharani · Ch. Bharathi · V. Anusha · K. Deena Flarance &nbsp;|&nbsp; Guide: Dr. K. Prasanthi</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
